@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="scripts/config.js"></script>
+        <script type="module">
+
+            var inputfield = document.getElementById("inputtext")
+            var targetdiv = document.getElementById("result")
+
+            var taskidtowaitfor
+            var intervalid
+
+            async function waiter() {
+                var statusresponse = await fetch(config.taskbridgebaseurl + "/tasks/status/" + taskidtowaitfor)
+                var statusresult = await statusresponse.json()
+                if (statusresult.status === "done") {
+                    var resultresponse = await fetch(config.taskbridgebaseurl + "/tasks/result/" + taskidtowaitfor)
+                    var result = await resultresponse.json()
+                    var translatedtext = result.result.text
+                    targetdiv.innerText = translatedtext
+                    console.log(result)
+                } else {
+                    targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status})`
+                    console.log(statusresult)
+                }
+            }
+
+            async function translate() {
+                var sourcetext = inputfield.value
+
+                var addresponse = await fetch(config.taskbridgebaseurl + "/tasks/add/translate_de_en", {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        text: sourcetext
+                    })
+                })
+                var addresult = await addresponse.json()
+                taskidtowaitfor = addresult.id
+
+                intervalid = setInterval(waiter, 1000)
+                waiter()
+
+            }
+
+            document.getElementById("start").addEventListener("click", translate)
+
+        </script>
+    </head>
+    <body style="display:flex;flex-direction:column;">
+        <textarea id="inputtext" style="display:block;">
+Ich war es nicht!
+        </textarea>
+        <button id="start">Translate</button>
+        <div id="result"></div>
+    </body>
+</html>
