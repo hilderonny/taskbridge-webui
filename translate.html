@@ -28,13 +28,15 @@
             async function translate() {
                 var sourcetext = inputfield.value
 
-                var addresponse = await fetch(config.taskbridgebaseurl + "/tasks/add/translate_en_de", {
+                var addresponse = await fetch(config.taskbridgebaseurl + "/tasks/add/translate", {
                     method: "POST",
                     headers: {
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
+                        sourcelanguage: "en",
+                        targetlanguage: "de",
                         text: sourcetext
                     })
                 })
