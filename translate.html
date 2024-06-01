@@ -19,6 +19,7 @@
                     var translatedtext = result.result.text
                     targetdiv.innerText = translatedtext
                     console.log(result)
+                    clearInterval(intervalid)
                 } else {
                     targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status})`
                     console.log(statusresult)
