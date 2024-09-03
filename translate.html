@@ -13,11 +13,11 @@
             async function waiter() {
                 var statusresponse = await fetch(config.taskbridgebaseurl + "/tasks/status/" + taskidtowaitfor)
                 var statusresult = await statusresponse.json()
-                if (statusresult.status === "done") {
+                if (statusresult.status === "completed") {
                     var resultresponse = await fetch(config.taskbridgebaseurl + "/tasks/result/" + taskidtowaitfor)
-                    var result = await resultresponse.json()
-                    var translatedtext = result.result.text
-                    targetdiv.innerText = translatedtext
+                    var json = await resultresponse.json()
+                    var translatedtexts = json.result.texts
+                    targetdiv.innerText = translatedtexts.join("<br/>")
                     console.log(result)
                     clearInterval(intervalid)
                 } else {
@@ -29,16 +29,21 @@
             async function translate() {
                 var sourcetext = inputfield.value
 
-                var addresponse = await fetch(config.taskbridgebaseurl + "/tasks/add/translate", {
+                var addresponse = await fetch(config.taskbridgebaseurl + "/tasks/add/", {
                     method: "POST",
                     headers: {
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        sourcelanguage: "en",
-                        targetlanguage: "de",
-                        text: sourcetext
+                        type: "translate",
+                        requirements: {
+                            sourcelanguage: "en",
+                            targetlanguage: "de"
+                        },
+                        data: {
+                            texts: [ sourcetext ]
+                        }
                     })
                 })
                 var addresult = await addresponse.json()

@@ -14,7 +14,7 @@ async function deletetask(taskid) {
 }
 
 async function loadTasks() {
-    const result = await fetch(taskbridgebaseurl + "/tasks")
+    const result = await fetch(taskbridgebaseurl + "/tasks/list/")
     const tasks = await result.json()
     console.log(tasks)
     tasktablebody.innerText = ""
@@ -36,9 +36,9 @@ async function loadTasks() {
     }
 }
 
-function load() {
-    loadConfiguration()
-    loadTasks()
+async function load() {
+    await loadConfiguration()
+    await loadTasks()
     document.getElementById("time").innerHTML = new Date().toLocaleString()
 }
 
