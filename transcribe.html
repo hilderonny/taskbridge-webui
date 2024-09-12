@@ -39,7 +39,7 @@
                     clearInterval(intervalid)
                     intervalid = undefined
                 } else {
-                    targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status}) ...`
+                    targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status}${statusresult.progress ? " " + statusresult.progress + "%" : ""}) ...`
                 }
             }
 
