@@ -19,9 +19,12 @@
 
             .board .lane .tasks { flex: 1; overflow: auto; }
 
-            .board .lane .tasks .task { cursor: pointer; background-color: #fff; box-shadow: 0px 0px 1px 2px #eaebed; border-radius: 3px; padding: 16px; color: #233559; display: grid; grid-template-areas: 'title title title' 'type duration worker'; margin-bottom: 4px; }
+            .board .lane .tasks .task { cursor: pointer; background-color: #fff; box-shadow: 0px 0px 1px 2px #eaebed; border-radius: 3px; padding: 16px; color: #233559; display: grid; grid-template-areas: 'title title title' 'progress progress progress' 'type duration worker'; margin-bottom: 4px; }
 
-            .board .lane .tasks .task .tasktitle { grid-area: title; padding-bottom: 16px; }
+            .board .lane .tasks .task .tasktitle { grid-area: title; padding-bottom: 2px; }
+            .board .lane .tasks .task .taskprogressbar { grid-area: progress; margin-bottom: 11px; background-color: #f6f6f6; height: 3px; visibility: hidden; }
+            .board .lane.inprogress .tasks .task .taskprogressbar { visibility: visible; }
+            .board .lane .tasks .task .taskprogressbar .taskprogress { background-color: #63ba3c; height: 100%; width: 0%; }
             .board .lane .tasks .task .tasktype { grid-area: type; }
             .tasktype div { display: inline-block; color: #ffffff; font-weight: bold; border-radius: 3px; padding: 2px 4px; text-transform: uppercase; font-size: 9pt; }
             .board .lane .tasks .task .taskduration { grid-area: duration; text-align: center; }
@@ -134,7 +137,7 @@
                 if (red > 255) red = 255
                 var durationColor = `rgb(${red},${green}, 0)`
                 var typeColor = `hsl(${calculateHue(task.type)}deg 50% 50%)`
-                taskDiv.innerHTML = `<div class="tasktitle">${task.id}</div><div class="tasktype"><div style="background-color:${typeColor}">${task.type}</div></div><div class="taskduration"><div style="border-color:${durationColor}">${formattedDuration}</div></div><div class="taskworker"><div>${task.worker || ""}</div></div>`
+                taskDiv.innerHTML = `<div class="tasktitle">${task.id}</div><div class="taskprogressbar"><div class="taskprogress" style="width:${task.progress}%"></div></div><div class="tasktype"><div style="background-color:${typeColor}">${task.type}</div></div><div class="taskduration"><div style="border-color:${durationColor}">${formattedDuration}</div></div><div class="taskworker"><div>${task.worker || ""}</div></div>`
                 taskDiv.addEventListener("click", () => showTaskDetails(task.id))
                 return taskDiv;
             }
