@@ -7,13 +7,6 @@ Web UI for https://github.com/hilderonny/taskbridge.
 You need to install [TaskBridge](https://github.com/hilderonny/taskbridge) and there point the `WEBROOT` environment variable to this repository.
 This is needed when using TaskBrige in a local network without domains for supressing CORS problems across different servers for API and Web UI.
 
-## Known workers
-
-1. [Text translation](https://github.com/hilderonny/taskworker-translate)
-1. [Audio transcription](https://github.com/hilderonny/taskworker-transcribe)
-1. [Image classification](https://github.com/hilderonny/taskworker-classifyimage)
-1. [Virus scanning](https://github.com/hilderonny/taskworker-scanforvirus)
-
 ## References
 
 1. [Nodes icons created by Kalashnyk - Flaticon](https://www.flaticon.com/free-icons/nodes)
