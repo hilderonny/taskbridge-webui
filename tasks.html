@@ -9,6 +9,9 @@
 
             h1 { font-size: 24pt; margin-bottom: 24px; }
 
+            .statistics { margin-bottom: 8px; }
+            .statistics .tasktype { display: inline-block; margin: 0 4px 4px 0; }
+
             .board { display: flex; flex-direction: row; flex: 1; overflow: hidden; max-height: 100%; }
 
             .board .lane { flex: 1; margin-right: 16px; background-color: #f1f3f5; border-radius: 3px; padding: 8px; display: flex; flex-direction: column; overflow: hidden; max-height: 100%; }
@@ -143,13 +146,13 @@
             }
 
             async function loadTasks() {
-                const result = await fetch(`${apiroot}/list/`)
-                const tasks = await result.json()
+                var result = await fetch(`${apiroot}/list/`)
+                var tasks = await result.json()
                 document.querySelectorAll(".board .lane .tasks").forEach(node => node.innerText = "")
                 var opencounter = 0
                 var inprogresscounter = 0
                 var completedcounter = 0
-                for (const task of tasks) {
+                for (var task of tasks) {
                     var taskDiv = createDivForTask(task)
                     document.querySelector(`.board .lane.${task.status} .tasks`).appendChild(taskDiv)
                     if (task.status === "open") opencounter++;
@@ -161,8 +164,25 @@
                 document.querySelector(".board .counter.completed").innerHTML = completedcounter;
             }
 
+            async function loadStatistics() {
+                var result = await fetch(`${apiroot}/statistics/`)
+                var statistics = await result.json()
+                //var statistics = { "transcribe": 1234567890, "translate": 1234567890 }
+                var formatter = new Intl.NumberFormat()
+                var domElement = document.querySelector(".statistics")
+                domElement.innerHTML = ""
+                var names = Object.keys(statistics).sort()
+                for (var name of names) {
+                    var count = statistics[name]
+                    var typeColor = `hsl(${calculateHue(name)}deg 50% 50%)`
+                    var statisticHtml =`<div class="tasktype"><div style="background-color:${typeColor}">${name}&nbsp;&nbsp;&nbsp;${formatter.format(count)}</div></div>`
+                    domElement.innerHTML += statisticHtml
+                }
+            }
+
             async function load() {
-                await loadTasks()
+                loadTasks()
+                loadStatistics()
             }
 
             setInterval(load, 1000)
@@ -179,6 +199,20 @@
     <body>
 
         <h1>Tasks</h1>
+
+        <div class="statistics">
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+            <div class="tasktype"><div style="background-color:#ffc400">translate 123.456.678.012</div></div>
+        </div>
 
         <div class="board">
 
