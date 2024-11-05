@@ -41,6 +41,12 @@
                 delete location.search
             }
 
+            (async () => {
+                var response = await fetch("/api/version")
+                var version = await response.text()
+                document.title += " " + version
+            })()
+
         </script>
 
     </head>
