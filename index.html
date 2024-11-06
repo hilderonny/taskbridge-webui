@@ -13,14 +13,16 @@
             body { display: flex; }
             iframe { flex: 1; border: none; }
 
-            .navigation { background-color: #eff1f3; padding: 16px; }
-            .navigation .header { margin-bottom: 16px; background: url(/images/android-chrome-192x192.png) no-repeat left center; background-size: contain; padding-left: 40px; }
-            .navigation .header .title { font-weight: bold; margin-top: 6px; }
+            .navigation { display: flex; flex-direction: column; background-color: #eff1f3; padding: 16px; }
+            .navigation .header { margin-bottom: 16px; background: url(/images/android-chrome-192x192.png) no-repeat left center; background-size: contain; padding-left: 40px; height: 32px; }
+            .navigation .header .title { font-weight: bold; }
             .navigation .header .subtitle { font-weight: bold; font-size: 9pt; color: #69768e; margin-bottom: 6px; }
+            .navigation .links { flex: 1; overflow: auto; }
             .navigation .links input { display: none; }
             .navigation .links label { color: #627088; display: block; padding: 9px 11px 9px 30px; text-decoration: none; border-radius: 4px; user-select: none; background: no-repeat 9px center; background-size: 16px; }
             .navigation .links label:hover { background-color: #e5e8ec; cursor: pointer; }
             .navigation .links input:checked+label { color: #0445ae; background-color: #e5e8ec; }
+            .navigation .footer .version { text-align: center; color: #bbbbbb; font-size: 9pt; margin-top:16px; }
             #link-workers+label { background-image: url(/images/network.png) }
             #link-tasks+label { background-image: url(/images/clipboard.png) }
             #link-transcribe+label { background-image: url(/images/transcription.png) }
@@ -45,6 +47,7 @@
                 var response = await fetch("/api/version")
                 var version = await response.text()
                 document.title += " " + version
+                document.querySelector(".navigation .footer .version").innerHTML = version
             })()
 
         </script>
@@ -66,6 +69,10 @@
                 <input type="radio" id="link-translate" name="link" onclick="self.frames['content'].location.href='translate.html'"><label for="link-translate">Translate</label>
                 <input type="radio" id="link-classifyimage" name="link" onclick="self.frames['content'].location.href='classifyimage.html'"><label for="link-classifyimage">Classify image</label>
                 <input type="radio" id="link-scanforvirus" name="link" onclick="self.frames['content'].location.href='scanforvirus.html'"><label for="link-scanforvirus">Scan for virus</label>
+            </div>
+
+            <div class="footer">
+                <div class="version"></div>
             </div>
 
         </div>
