@@ -34,6 +34,8 @@
         
         <script type="module">
 
+            const WEBUI_VERSION = "1.1.0"
+
             if (location.search) {
                 var params = location.search.substring(1).split("=")
                 if (params[0] === "task") {
@@ -45,9 +47,8 @@
 
             (async () => {
                 var response = await fetch("/api/version")
-                var version = await response.text()
-                document.title += " " + version
-                document.querySelector(".navigation .footer .version").innerHTML = version
+                var taskbridgeversion = await response.text()
+                document.querySelector(".navigation .footer .version").innerHTML = `TaskBridge ${taskbridgeversion} / WebUI ${WEBUI_VERSION}`
             })()
 
         </script>
