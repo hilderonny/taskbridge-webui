@@ -26,3 +26,4 @@ This is needed when using TaskBrige in a local network without domains for supre
 1. [Transcription icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/transcription)
 1. [Image-recognition icons created by SBTS2018 - Flaticon](https://www.flaticon.com/free-icons/image-recognition)
 1. [Virus icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/virus)
+1. [Ai assistant icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/ai-assistant)
