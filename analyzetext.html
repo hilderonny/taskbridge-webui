@@ -140,7 +140,7 @@
                 var atag = document.createElement("a")
                 atag.style.display = "none"
                 atag.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(chathistory))}`)
-                atag.setAttribute("download", `${Date.now()}.atc`) // atc = Analyze Text Chat
+                atag.setAttribute("download", `${Date.now()}.atc.json`) // atc = Analyze Text Chat
                 document.body.appendChild(atag)
                 atag.click()
                 document.body.removeChild(atag)
@@ -149,7 +149,7 @@
             function upload() {
                 const fileinput = document.createElement("input")
                 fileinput.setAttribute("type", "file")
-                fileinput.setAttribute("accept", ".atc")
+                fileinput.setAttribute("accept", ".atc.json")
                 fileinput.addEventListener("change", e => {
                     var file = e.target.files[0]
                     if (file) {
