@@ -3,47 +3,82 @@
     <head>
         <style>
 
-            * { margin: 0; padding: 0; font-family: sans-serif; font-size: 12pt; color: #1e2f55; box-sizing: border-box; }
-            html, body { width: 100%; height: 100%; }
-            body { padding: 32px 16px 32px 32px; display: flex; flex-direction: column; }
+            * { font-family: sans-serif; font-size: 12pt; color: #1e2f55; box-sizing: border-box; }
+            html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+            body { padding: 32px; display: flex; flex-direction: column; }
 
-            h1 { font-size: 24pt; margin-bottom: 24px; }
+            h1 { font-size: 24pt; margin: 0 0 24px 0; }
 
             .content { flex: 1; display: flex; flex-direction: column; overflow: auto; }
-            .content .output { flex: 1; border: 1px solid #dddddd; padding: 4px; line-break: anywhere; overflow: auto; }
+            .content .output { flex: 1; overflow: auto; margin-bottom: 16px; }
+            .content .output .message { padding: 12px; border-radius: 12px; margin-bottom: 16px; }
+            .content .output .message.user { background-color: lightskyblue; border-bottom-right-radius: 0; margin-left: 64px; }
+            .content .output .message.assistant { border-bottom-left-radius: 0; border: 1px solid #eeeeee; margin-right: 64px; }
+            .content .output .message.waiting { background-color: antiquewhite; }
             .content .inputbar { display: flex; flex-direction: row; }
-            .content .inputbar .input { flex: 1; border: 1px solid #888888; box-shadow: 0px 0px 3px 0px #888888 inset; padding: 4px; line-break: anywhere; }
+            .content .inputbar .input { flex: 1; border: 1px solid #888888; box-shadow: 0px 0px 3px 0px #888888 inset; padding: 4px; }
             .content .inputbar .input::placeholder { color: #aaaaaa; }
-            .content .inputbar button { background: #f1f2f4; border: none; border-radius: 3px; padding: 8px; cursor: pointer; margin-top: 16px; }
+            .content .inputbar button { background: #f1f2f4; border: none; border-radius: 3px; padding: 8px; cursor: pointer; margin-left: 8px; }
             .content .inputbar button:hover { background-color: #d5d6d8; }
 
         </style>
         <script type="module">
+
+            import {micromark} from "./micromark.bundle.mjs"
 
             var taskidtowaitfor = undefined
             var intervalid = undefined
             var outputdiv = document.querySelector(".content .output")
             var apiroot = "/api/tasks"
 
+            var iswaiting = false
+            var waitingdiv = document.createElement("div")
+            waitingdiv.classList.add("message")
+            waitingdiv.classList.add("waiting")
+
+            function showmessagehistory() {
+                outputdiv.innerHTML = ""
+                for (var message of chathistory) {
+                    var messagediv = document.createElement("div")
+                    messagediv.classList.add("message")
+                    messagediv.classList.add(message.role)
+                    var htmlcontent = micromark(message.content)
+                    messagediv.innerHTML = htmlcontent
+                    outputdiv.appendChild(messagediv)
+                }
+                waitingdiv.style.display = iswaiting ? "block" : "none"
+                outputdiv.appendChild(waitingdiv)
+                outputdiv.scrollTop = outputdiv.scrollHeight
+            }
+
             async function waiter() {
                 var statusresponse = await fetch(`${apiroot}/status/${taskidtowaitfor}`)
                 var statusresult = await statusresponse.json()
                 if (statusresult.status === "completed") {
+                    iswaiting = false
                     var resultresponse = await fetch(`${apiroot}/result/${taskidtowaitfor}`)
                     var json = await resultresponse.json()
-                    outputdiv.innerHTML = json
+
+                    chathistory = json.result.messages
+                    localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
+
+                    showmessagehistory()
+
                     await fetch(`${apiroot}/remove/${taskidtowaitfor}`, { method: 'DELETE' })
                     localStorage.removeItem("analyzetext-taskidtowaitfor")
                     clearInterval(intervalid)
                     intervalid = undefined
                 } else {
-                    outputdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status}${statusresult.progress ? " " + statusresult.progress + "%" : ""}) ...`
+                    iswaiting = true
+                    waitingdiv.style.display = "block"
+                    waitingdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status}${statusresult.progress ? " " + statusresult.progress + "%" : ""}) ...`
+                    outputdiv.scrollTop = outputdiv.scrollHeight
                     console.log(statusresult)
                 }
             }
 
             async function send() {
-                var usermessagecontent = document.querySelector(".content .inputbar .input").innerText
+                var usermessagecontent = document.querySelector(".content .inputbar .input").value
                 var newmessage = {
                     role: "user",
                     content: usermessagecontent
@@ -70,6 +105,8 @@
                 localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
                 localStorage.setItem("analyzetext-taskidtowaitfor", taskidtowaitfor)
 
+                document.querySelector(".content .inputbar .input").value = ""
+
                 if (!intervalid) {
                     intervalid = setInterval(waiter, 1000)
                 }
@@ -82,6 +119,7 @@
             var storedchathistory = localStorage.getItem("analyzetext-chathistory")
             if (storedchathistory) {
                 chathistory = JSON.parse(storedchathistory)
+                showmessagehistory()
             }
             var lasttaskidtowaitfor = localStorage.getItem("analyzetext-taskidtowaitfor")
             if (lasttaskidtowaitfor) {
@@ -90,7 +128,56 @@
                 waiter()
             }
 
+            function clear() {
+                if (confirm("Really delete chat and restart?")) {
+                    chathistory = []
+                    localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
+                    showmessagehistory()
+                }
+            }
+
+            function download() {
+                var atag = document.createElement("a")
+                atag.style.display = "none"
+                atag.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(chathistory))}`)
+                atag.setAttribute("download", `${Date.now()}.atc`) // atc = Analyze Text Chat
+                document.body.appendChild(atag)
+                atag.click()
+                document.body.removeChild(atag)
+            }
+
+            function upload() {
+                const fileinput = document.createElement("input")
+                fileinput.setAttribute("type", "file")
+                fileinput.setAttribute("accept", ".atc")
+                fileinput.addEventListener("change", e => {
+                    var file = e.target.files[0]
+                    if (file) {
+                        var reader = new FileReader()
+                        reader.onload = function(readerevent) {
+                            var filecontent = readerevent.target.result
+                            chathistory = JSON.parse(filecontent)
+                            localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
+                            showmessagehistory()
+                        }
+                        reader.readAsText(file)
+                    }
+                })
+                document.body.appendChild(fileinput)
+                fileinput.style.display = "none"
+                fileinput.click()
+                document.body.removeChild(fileinput)
+            }
+
+            document.querySelector(".content .inputbar .input").addEventListener("keypress", e => {
+                if (e.code === "Enter" && e.ctrlKey) {
+                    send()
+                }
+            })
             document.querySelector(".content .inputbar .send").addEventListener("click", send)
+            document.querySelector(".content .inputbar .download").addEventListener("click", download)
+            document.querySelector(".content .inputbar .upload").addEventListener("click", upload)
+            document.querySelector(".content .inputbar .clear").addEventListener("click", clear)
 
         </script>
     </head>
@@ -101,8 +188,11 @@
         <div class="content">
             <div class="output"></div>
             <div class="inputbar">
-                <div class="input" contenteditable></div>
+                <textarea class="input"></textarea>
                 <button class="send">Send</button>
+                <button class="download">Download</button>
+                <button class="upload">Upload</button>
+                <button class="clear">Clear</button>
             </div>
         </div>
 
