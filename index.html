@@ -29,10 +29,13 @@
             #link-translate+label { background-image: url(/images/translation.png) }
             #link-classifyimage+label { background-image: url(/images/artificial-intelligence.png) }
             #link-scanforvirus+label { background-image: url(/images/virus.png) }
+            #link-analyzetext+label { background-image: url(/images/chat.png) }
 
         </style>
         
         <script type="module">
+
+            const WEBUI_VERSION = "1.1.0"
 
             if (location.search) {
                 var params = location.search.substring(1).split("=")
@@ -45,9 +48,8 @@
 
             (async () => {
                 var response = await fetch("/api/version")
-                var version = await response.text()
-                document.title += " " + version
-                document.querySelector(".navigation .footer .version").innerHTML = version
+                var taskbridgeversion = await response.text()
+                document.querySelector(".navigation .footer .version").innerHTML = `TaskBridge ${taskbridgeversion} / WebUI ${WEBUI_VERSION}`
             })()
 
         </script>
@@ -69,6 +71,7 @@
                 <input type="radio" id="link-translate" name="link" onclick="self.frames['content'].location.href='translate.html'"><label for="link-translate">Translate</label>
                 <input type="radio" id="link-classifyimage" name="link" onclick="self.frames['content'].location.href='classifyimage.html'"><label for="link-classifyimage">Classify image</label>
                 <input type="radio" id="link-scanforvirus" name="link" onclick="self.frames['content'].location.href='scanforvirus.html'"><label for="link-scanforvirus">Scan for virus</label>
+                <input type="radio" id="link-analyzetext" name="link" onclick="self.frames['content'].location.href='analyzetext.html'"><label for="link-analyzetext">Analyze text</label>
             </div>
 
             <div class="footer">
