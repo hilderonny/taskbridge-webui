@@ -106,6 +106,7 @@
                 localStorage.setItem("analyzetext-taskidtowaitfor", taskidtowaitfor)
 
                 document.querySelector(".content .inputbar .input").value = ""
+                showmessagehistory()
 
                 if (!intervalid) {
                     intervalid = setInterval(waiter, 1000)

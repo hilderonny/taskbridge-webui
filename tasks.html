@@ -76,7 +76,6 @@
             async function showTaskDetails(taskid) {
                 var response = await fetch(`${apiroot}/details/${taskid}`)
                 var task = await response.json()
-                console.log(task)
                 document.querySelector(".detailsoverlay .header .title").innerText = task.id
                 document.querySelector(".detailsoverlay .rawdata.data").innerText = task.data ? JSON.stringify(task.data, null, 2) : ""
                 document.querySelector(".detailsoverlay .rawdata.result").innerText = task.result ? JSON.stringify(task.result, null, 2) : ""
