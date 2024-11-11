@@ -136,7 +136,7 @@
                 }
             }
 
-            function download() {
+            function save() {
                 var atag = document.createElement("a")
                 atag.style.display = "none"
                 atag.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(chathistory))}`)
@@ -146,7 +146,7 @@
                 document.body.removeChild(atag)
             }
 
-            function upload() {
+            function load() {
                 const fileinput = document.createElement("input")
                 fileinput.setAttribute("type", "file")
                 fileinput.setAttribute("accept", ".atc.json")
@@ -175,8 +175,8 @@
                 }
             })
             document.querySelector(".content .inputbar .send").addEventListener("click", send)
-            document.querySelector(".content .inputbar .download").addEventListener("click", download)
-            document.querySelector(".content .inputbar .upload").addEventListener("click", upload)
+            document.querySelector(".content .inputbar .save").addEventListener("click", save)
+            document.querySelector(".content .inputbar .load").addEventListener("click", load)
             document.querySelector(".content .inputbar .clear").addEventListener("click", clear)
 
         </script>
@@ -190,8 +190,8 @@
             <div class="inputbar">
                 <textarea class="input"></textarea>
                 <button class="send">Send</button>
-                <button class="download">Download</button>
-                <button class="upload">Upload</button>
+                <button class="save">Save</button>
+                <button class="load">Load</button>
                 <button class="clear">Clear</button>
             </div>
         </div>
