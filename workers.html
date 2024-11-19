@@ -44,9 +44,31 @@
             }
 
             async function loadWorkers() {
-                var result = await fetch(`${apiroot}/list/`)
-                var workers = await result.json()
-                var html = workers.map(worker => `<tr><td>${worker.name}</td><td class="tasktype"><div style="background-color:hsl(${calculateHue(worker.type)}deg 50% 50%)">${worker.type}</div></td><td class="status ${worker.status}"><div>${worker.status}</div></td><td><a target="_parent" href="index.html?task=${worker.taskid}">${worker.taskid || ""}</a></td><td class="duration"><div>${formatDuration(worker.lastping)}</div></td></tr>`).join("")
+                var listresult = await fetch(`${apiroot}/list/`)
+                var workers = await listresult.json()
+
+                var statisticsresult =  await fetch(`/api/tasks/workerstatistics/`)
+                var workerstatistics = await statisticsresult.json()
+
+                var formatter = new Intl.NumberFormat()
+
+                var html = workers.map(worker => `
+                    <tr>
+                        <td>${worker.name}</td>
+                        <td class="tasktype">
+                            <div style="background-color:hsl(${calculateHue(worker.type)}deg 50% 50%)">${worker.type}</div>
+                            <div style="color:#cccccc">${formatter.format((workerstatistics[worker.name] || {})[worker.type] || 0)}</div>
+                        </td>
+                        <td class="status ${worker.status}">
+                            <div>${worker.status}</div>
+                        </td>
+                        <td>
+                            <a target="_parent" href="index.html?task=${worker.taskid}">${worker.taskid || ""}</a>
+                        </td>
+                        <td class="duration">
+                            <div>${formatDuration(worker.lastping)}</div>
+                        </td>
+                    </tr>`).join("")
                 tableBody.innerHTML = html
             }
 
