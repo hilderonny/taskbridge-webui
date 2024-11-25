@@ -43,6 +43,14 @@
                 return durationText
             }
 
+            function workerSorter(worker1, worker2) {
+                const compareName = worker1.name.localeCompare(worker2.name)
+                if (compareName !== 0) {
+                    return compareName
+                }
+                return worker1.type.localeCompare(worker2.type)
+            }
+
             async function loadWorkers() {
                 var listresult = await fetch(`${apiroot}/list/`)
                 var workers = await listresult.json()
@@ -52,7 +60,7 @@
 
                 var formatter = new Intl.NumberFormat()
 
-                var html = workers.map(worker => `
+                var html = workers.sort(workerSorter).map(worker => `
                     <tr>
                         <td>${worker.name}</td>
                         <td class="tasktype">
