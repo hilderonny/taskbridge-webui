@@ -70,13 +70,13 @@
         </style>
         <script type="module">
 
+            import TASKBRIDGE from './taskbridge.js'
             import CONFIG from './config.json' with {type: 'json'}
 
             var tasktablebody = document.getElementById("tasks")
 
             async function showTaskDetails(taskid) {
-                var response = await fetch(`${CONFIG.apiRoot}/tasks/details/${taskid}`)
-                var task = await response.json()
+                var task = await TASKBRIDGE.getTaskDetails(taskid)
                 document.querySelector(".detailsoverlay .header .title").innerText = task.id
                 document.querySelector(".detailsoverlay .rawdata.data").innerText = task.data ? JSON.stringify(task.data, null, 2) : ""
                 document.querySelector(".detailsoverlay .rawdata.result").innerText = task.result ? JSON.stringify(task.result, null, 2) : ""
@@ -94,12 +94,12 @@
                 var duration = task.completedat ? Math.round((task.completedat - task.startedat) / 1000) : undefined
                 document.querySelector(".detailsoverlay .rightcolumn .duration div").innerText = duration ? formatDuration(duration) : "-"
                 document.querySelector(".detailsoverlay button.restart").onclick = async () => {
-                    await fetch(`${CONFIG.apiRoot}/tasks/restart/${taskid}`)
+                    await TASKBRIDGE.restartTask(taskid)
                     await showTaskDetails(taskid)
                 }
                 document.querySelector(".detailsoverlay button.delete").onclick = async () => {
                     if (!confirm("Really delete?")) return
-                    await fetch(`${CONFIG.apiRoot}/tasks/remove/${taskid}`, { method: 'DELETE' })
+                    await TASKBRIDGE.removeTask(taskid)
                     await loadTasks()
                     document.querySelector('.detailsoverlay').style.display = 'none'
                 }
@@ -146,8 +146,7 @@
             }
 
             async function loadTasks() {
-                var result = await fetch(`${CONFIG.apiRoot}/tasks/list/`)
-                var tasks = await result.json()
+                var tasks = await TASKBRIDGE.getTaskList()
                 document.querySelectorAll(".board .lane .tasks").forEach(node => node.innerText = "")
                 var opencounter = 0
                 var inprogresscounter = 0
@@ -165,9 +164,7 @@
             }
 
             async function loadStatistics() {
-                var result = await fetch(`${CONFIG.apiRoot}/tasks/statistics/`)
-                var statistics = await result.json()
-                //var statistics = { "transcribe": 1234567890, "translate": 1234567890 }
+                var statistics = await TASKBRIDGE.getTaskStatistics()
                 var formatter = new Intl.NumberFormat()
                 var domElement = document.querySelector(".statistics")
                 domElement.innerHTML = ""

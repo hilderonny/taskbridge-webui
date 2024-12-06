@@ -22,7 +22,7 @@
         </style>
         <script type="module">
 
-            import CONFIG from './config.json' with {type: 'json'}
+            import TASKBRIDGE from './taskbridge.js'
 
             var tableBody = document.querySelector("tbody")
 
@@ -53,11 +53,8 @@
             }
 
             async function loadWorkers() {
-                var listresult = await fetch(`${CONFIG.apiRoot}/workers/list/`)
-                var workers = await listresult.json()
-
-                var statisticsresult =  await fetch(`${CONFIG.apiRoot}/tasks/workerstatistics/`)
-                var workerstatistics = await statisticsresult.json()
+                var workers = await TASKBRIDGE.getWorkerList()
+                var workerstatistics = await TASKBRIDGE.getWorkerStatistics()
 
                 var formatter = new Intl.NumberFormat()
 
