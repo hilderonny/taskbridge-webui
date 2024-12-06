@@ -22,7 +22,8 @@
         </style>
         <script type="module">
 
-            var apiroot = "/api/workers"
+            import CONFIG from './config.json' with {type: 'json'}
+
             var tableBody = document.querySelector("tbody")
 
             function calculateHue(text) {
@@ -52,10 +53,10 @@
             }
 
             async function loadWorkers() {
-                var listresult = await fetch(`${apiroot}/list/`)
+                var listresult = await fetch(`${CONFIG.apiRoot}/workers/list/`)
                 var workers = await listresult.json()
 
-                var statisticsresult =  await fetch(`/api/tasks/workerstatistics/`)
+                var statisticsresult =  await fetch(`${CONFIG.apiRoot}/tasks/workerstatistics/`)
                 var workerstatistics = await statisticsresult.json()
 
                 var formatter = new Intl.NumberFormat()

@@ -25,12 +25,13 @@
         </style>
         <script type="module">
 
+            import CONFIG from './config.json' with {type: 'json'}
+
             import {micromark} from "./micromark.bundle.mjs"
 
             var taskidtowaitfor = undefined
             var intervalid = undefined
             var outputdiv = document.querySelector(".content .output")
-            var apiroot = "/api/tasks"
             var firstchathistory = []
             var secondchathistory = []
             var systemmessage = {
@@ -76,14 +77,14 @@
             }
 
             async function waiter() {
-                var statusresponse = await fetch(`${apiroot}/status/${taskidtowaitfor}`)
+                var statusresponse = await fetch(`${CONFIG.apiRoot}/tasks/status/${taskidtowaitfor}`)
                 var statusresult = await statusresponse.json()
                 if (statusresult.status === "completed") {
                     iswaiting = false
-                    var resultresponse = await fetch(`${apiroot}/result/${taskidtowaitfor}`)
+                    var resultresponse = await fetch(`${CONFIG.apiRoot}/tasks/result/${taskidtowaitfor}`)
                     var json = await resultresponse.json()
                     
-                    await fetch(`${apiroot}/remove/${taskidtowaitfor}`, { method: 'DELETE' })
+                    await fetch(`${CONFIG.apiRoot}/tasks/remove/${taskidtowaitfor}`, { method: 'DELETE' })
                     clearInterval(intervalid)
                     intervalid = undefined
 
@@ -124,7 +125,7 @@
                 }
                 var formData = new FormData()
                 formData.append('json', JSON.stringify(body))
-                var addresponse = await fetch(`${apiroot}/add/`, {
+                var addresponse = await fetch(`${CONFIG.apiRoot}/tasks/add/`, {
                     method: "POST",
                     body: formData
                 })

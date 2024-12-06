@@ -35,7 +35,7 @@
         
         <script type="module">
 
-            const WEBUI_VERSION = "1.1.0"
+            import CONFIG from './config.json' with {type: 'json'}
 
             if (location.search) {
                 var params = location.search.substring(1).split("=")
@@ -47,9 +47,9 @@
             }
 
             (async () => {
-                var response = await fetch("/api/version")
+                var response = await fetch(`${CONFIG.apiRoot}/version`)
                 var taskbridgeversion = await response.text()
-                document.querySelector(".navigation .footer .version").innerHTML = `TaskBridge ${taskbridgeversion} / WebUI ${WEBUI_VERSION}`
+                document.querySelector(".navigation .footer .version").innerHTML = `TaskBridge ${taskbridgeversion} / WebUI ${CONFIG.version}`
             })()
 
         </script>

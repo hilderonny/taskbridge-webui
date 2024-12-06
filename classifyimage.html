@@ -32,22 +32,23 @@
         </style>
         <script type="module">
 
+            import CONFIG from './config.json' with {type: 'json'}
+
             var taskidtowaitfor = undefined
             var intervalid = undefined
             var targetelement = document.querySelector(".result tbody")
-            var apiroot = "/api/tasks"
 
             async function waiter() {
-                var statusresponse = await fetch(`${apiroot}/status/${taskidtowaitfor}`)
+                var statusresponse = await fetch(`${CONFIG.apiRoot}/tasks/status/${taskidtowaitfor}`)
                 var statusresult = await statusresponse.json()
                 if (statusresult.status === "completed") {
-                    var resultresponse = await fetch(`${apiroot}/result/${taskidtowaitfor}`)
+                    var resultresponse = await fetch(`${CONFIG.apiRoot}/tasks/result/${taskidtowaitfor}`)
                     var json = await resultresponse.json()
 
                     var predictions = json.result.predictions
                     targetelement.innerHTML = predictions.map(prediction => `<tr><td>${prediction.class}</td><td>${prediction.name}</td><td>${Math.round(prediction.probability * 1000) / 10} %</td></tr>`).join("")
 
-                    await fetch(`${apiroot}/remove/${taskidtowaitfor}`, { method: 'DELETE' })
+                    await fetch(`${CONFIG.apiRoot}/tasks/remove/${taskidtowaitfor}`, { method: 'DELETE' })
                     localStorage.removeItem("classifyimage-taskidtowaitfor")
                     clearInterval(intervalid)
                     intervalid = undefined
@@ -73,7 +74,7 @@
 
                 targetelement.innerText = `<tr><td colspan="3">Uploading file ${file.name} ...</td></tr>`
                 
-                var addresponse = await fetch(`${apiroot}/add/`, {
+                var addresponse = await fetch(`${CONFIG.apiRoot}/tasks/add/`, {
                     method: "POST",
                     body: formData
                 })

@@ -70,11 +70,12 @@
         </style>
         <script type="module">
 
+            import CONFIG from './config.json' with {type: 'json'}
+
             var tasktablebody = document.getElementById("tasks")
-            var apiroot = "/api/tasks"
 
             async function showTaskDetails(taskid) {
-                var response = await fetch(`${apiroot}/details/${taskid}`)
+                var response = await fetch(`${CONFIG.apiRoot}/tasks/details/${taskid}`)
                 var task = await response.json()
                 document.querySelector(".detailsoverlay .header .title").innerText = task.id
                 document.querySelector(".detailsoverlay .rawdata.data").innerText = task.data ? JSON.stringify(task.data, null, 2) : ""
@@ -83,7 +84,7 @@
                 taskTypeDiv.innerText = task.type
                 var typeColor = `hsl(${calculateHue(task.type)}deg 50% 50%)`
                 taskTypeDiv.style.backgroundColor = typeColor
-                document.querySelector(".detailsoverlay .rightcolumn .file").innerHTML = task.file ? `<a href="${apiroot}/file/${taskid}">${task.file}</a>` : ""
+                document.querySelector(".detailsoverlay .rightcolumn .file").innerHTML = task.file ? `<a href="${CONFIG.apiRoot}/tasks/file/${taskid}">${task.file}</a>` : ""
                 document.querySelector(".detailsoverlay .rightcolumn .worker").innerText = task.worker || ""
                 document.querySelector(".detailsoverlay .rightcolumn .status").setAttribute("class", `status ${task.status}`)
                 document.querySelector(".detailsoverlay .rightcolumn .status div").innerText = (task.status === "inprogress" ? "in progress" : task.status)
@@ -93,12 +94,12 @@
                 var duration = task.completedat ? Math.round((task.completedat - task.startedat) / 1000) : undefined
                 document.querySelector(".detailsoverlay .rightcolumn .duration div").innerText = duration ? formatDuration(duration) : "-"
                 document.querySelector(".detailsoverlay button.restart").onclick = async () => {
-                    await fetch(`${apiroot}/restart/${taskid}`)
+                    await fetch(`${CONFIG.apiRoot}/tasks/restart/${taskid}`)
                     await showTaskDetails(taskid)
                 }
                 document.querySelector(".detailsoverlay button.delete").onclick = async () => {
                     if (!confirm("Really delete?")) return
-                    await fetch(`${apiroot}/remove/${taskid}`, { method: 'DELETE' })
+                    await fetch(`${CONFIG.apiRoot}/tasks/remove/${taskid}`, { method: 'DELETE' })
                     await loadTasks()
                     document.querySelector('.detailsoverlay').style.display = 'none'
                 }
@@ -145,7 +146,7 @@
             }
 
             async function loadTasks() {
-                var result = await fetch(`${apiroot}/list/`)
+                var result = await fetch(`${CONFIG.apiRoot}/tasks/list/`)
                 var tasks = await result.json()
                 document.querySelectorAll(".board .lane .tasks").forEach(node => node.innerText = "")
                 var opencounter = 0
@@ -164,7 +165,7 @@
             }
 
             async function loadStatistics() {
-                var result = await fetch(`${apiroot}/statistics/`)
+                var result = await fetch(`${CONFIG.apiRoot}/tasks/statistics/`)
                 var statistics = await result.json()
                 //var statistics = { "transcribe": 1234567890, "translate": 1234567890 }
                 var formatter = new Intl.NumberFormat()
