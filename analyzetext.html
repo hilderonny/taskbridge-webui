@@ -3,9 +3,9 @@
     <head>
         <style>
 
-            * { font-family: sans-serif; font-size: 12pt; color: #1e2f55; box-sizing: border-box; }
+            * { font-size: 12pt; color: #1e2f55; box-sizing: border-box; }
             html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
-            body { padding: 32px; display: flex; flex-direction: column; }
+            body { font-family: sans-serif; padding: 32px; display: flex; flex-direction: column; }
 
             h1 { font-size: 24pt; margin: 0 0 24px 0; }
 
@@ -24,12 +24,12 @@
         </style>
         <script type="module">
 
+            import TASKBRIDGE from './taskbridge.js'
+
             import {micromark} from "./micromark.bundle.mjs"
 
             var taskidtowaitfor = undefined
-            var intervalid = undefined
             var outputdiv = document.querySelector(".content .output")
-            var apiroot = "/api/tasks"
 
             var iswaiting = false
             var waitingdiv = document.createElement("div")
@@ -50,30 +50,20 @@
                 outputdiv.appendChild(waitingdiv)
                 outputdiv.scrollTop = outputdiv.scrollHeight
             }
+            
+            function statusCallback(taskStatus) {
+                iswaiting = true
+                waitingdiv.style.display = "block"
+                waitingdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${taskStatus.status}${taskStatus.progress ? " " + taskStatus.progress + "%" : ""}) ...`
+                outputdiv.scrollTop = outputdiv.scrollHeight
+            }
 
-            async function waiter() {
-                var statusresponse = await fetch(`${apiroot}/status/${taskidtowaitfor}`)
-                var statusresult = await statusresponse.json()
-                if (statusresult.status === "completed") {
-                    iswaiting = false
-                    var resultresponse = await fetch(`${apiroot}/result/${taskidtowaitfor}`)
-                    var json = await resultresponse.json()
-
-                    chathistory = json.result.messages
-                    localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
-
-                    showmessagehistory()
-
-                    await fetch(`${apiroot}/remove/${taskidtowaitfor}`, { method: 'DELETE' })
-                    localStorage.removeItem("analyzetext-taskidtowaitfor")
-                    clearInterval(intervalid)
-                    intervalid = undefined
-                } else {
-                    iswaiting = true
-                    waitingdiv.style.display = "block"
-                    waitingdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status}${statusresult.progress ? " " + statusresult.progress + "%" : ""}) ...`
-                    outputdiv.scrollTop = outputdiv.scrollHeight
-                }
+            function completionCallback(taskResult) {
+                iswaiting = false
+                chathistory = taskResult.messages
+                localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
+                showmessagehistory()
+                localStorage.removeItem("analyzetext-taskidtowaitfor")
             }
 
             async function send() {
@@ -84,22 +74,13 @@
                 }
                 chathistory.push(newmessage)
 
-                var body = {
-                    type: "analyzetext",
-                    data: {
-                        model: "llama3.2",
-                        messages: chathistory
-                    }
+                const data = {
+                    model: "llama3.2",
+                    messages: chathistory
                 }
-                var formData = new FormData()
-                formData.append('json', JSON.stringify(body))
 
-                var addresponse = await fetch(`${apiroot}/add/`, {
-                    method: "POST",
-                    body: formData
-                })
-                var addresult = await addresponse.json()
-                taskidtowaitfor = addresult.id
+                var addResult = await TASKBRIDGE.addTask('analyzetext', data)
+                taskidtowaitfor = addResult.id
 
                 localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
                 localStorage.setItem("analyzetext-taskidtowaitfor", taskidtowaitfor)
@@ -107,10 +88,7 @@
                 document.querySelector(".content .inputbar .input").value = ""
                 showmessagehistory()
 
-                if (!intervalid) {
-                    intervalid = setInterval(waiter, 1000)
-                }
-                waiter()
+                TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, completionCallback)
 
             }
 
@@ -123,9 +101,7 @@
             }
             var lasttaskidtowaitfor = localStorage.getItem("analyzetext-taskidtowaitfor")
             if (lasttaskidtowaitfor) {
-                taskidtowaitfor = lasttaskidtowaitfor
-                intervalid = setInterval(waiter, 1000)
-                waiter()
+                TASKBRIDGE.waitForTaskCompletion(lasttaskidtowaitfor, statusCallback, completionCallback)
             }
 
             function clear() {

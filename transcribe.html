@@ -21,62 +21,40 @@
         </style>
         <script type="module">
 
-            var taskidtowaitfor = undefined
-            var intervalid = undefined
-            var targetdiv = document.querySelector(".result")
-            var apiroot = "/api/tasks"
+            import TASKBRIDGE from './taskbridge.js'
 
-            async function waiter() {
-                var statusresponse = await fetch(`${apiroot}/status/${taskidtowaitfor}`)
-                var statusresult = await statusresponse.json()
-                if (statusresult.status === "completed") {
-                    var resultresponse = await fetch(`${apiroot}/result/${taskidtowaitfor}`)
-                    var json = await resultresponse.json()
-                    var texts = json.result.texts
-                    targetdiv.innerHTML = texts.map(text => text.text).join("<br/>")
-                    await fetch(`${apiroot}/remove/${taskidtowaitfor}`, { method: 'DELETE' })
-                    localStorage.removeItem("transcribe-taskidtowaitfor")
-                    clearInterval(intervalid)
-                    intervalid = undefined
-                } else {
-                    targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status}${statusresult.progress ? " " + statusresult.progress + "%" : ""}) ...`
-                }
+            var taskidtowaitfor = undefined
+            var targetdiv = document.querySelector(".result")
+
+            function statusCallback(taskStatus) {
+                targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${taskStatus.status}${taskStatus.progress ? " " + taskStatus.progress + "%" : ""}) ...`
+            }
+
+            function completionCallback(taskResult) {
+                var texts = taskResult.texts
+                targetdiv.innerHTML = texts.map(text => text.text).join("<br/>")
+                localStorage.removeItem("transcribe-taskidtowaitfor")
             }
 
             async function transcribe() {
 
                 var file = document.querySelector(".file").files[0]
-                var json = {
-                    type: "transcribe"
-                }
-
-                var formData = new FormData()
-                formData.append('file', file)
-                formData.append('json', JSON.stringify(json))
 
                 targetdiv.innerText = `Uploading file ${file.name} ...`
-                
-                var addresponse = await fetch(`${apiroot}/add/`, {
-                    method: "POST",
-                    body: formData
-                })
-                var addresult = await addresponse.json()
-                taskidtowaitfor = addresult.id
+
+                var addResult = await TASKBRIDGE.addTask('transcribe', undefined, file)
+
+                taskidtowaitfor = addResult.id
 
                 localStorage.setItem("transcribe-taskidtowaitfor", taskidtowaitfor)
 
-                if (!intervalid) {
-                    intervalid = setInterval(waiter, 1000)
-                }
-                waiter()
+                TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, completionCallback)
 
             }
 
             var lasttaskidtowaitfor = localStorage.getItem("transcribe-taskidtowaitfor")
             if (lasttaskidtowaitfor) {
-                taskidtowaitfor = lasttaskidtowaitfor
-                intervalid = setInterval(waiter, 1000)
-                waiter()
+                TASKBRIDGE.waitForTaskCompletion(lasttaskidtowaitfor, statusCallback, completionCallback)
             }
 
             document.querySelector(".start").addEventListener("click", transcribe)

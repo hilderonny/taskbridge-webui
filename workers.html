@@ -22,7 +22,8 @@
         </style>
         <script type="module">
 
-            var apiroot = "/api/workers"
+            import TASKBRIDGE from './taskbridge.js'
+
             var tableBody = document.querySelector("tbody")
 
             function calculateHue(text) {
@@ -52,11 +53,8 @@
             }
 
             async function loadWorkers() {
-                var listresult = await fetch(`${apiroot}/list/`)
-                var workers = await listresult.json()
-
-                var statisticsresult =  await fetch(`/api/tasks/workerstatistics/`)
-                var workerstatistics = await statisticsresult.json()
+                var workers = await TASKBRIDGE.getWorkerList()
+                var workerstatistics = await TASKBRIDGE.getWorkerStatistics()
 
                 var formatter = new Intl.NumberFormat()
 

@@ -25,12 +25,12 @@
         </style>
         <script type="module">
 
+            import TASKBRIDGE from './taskbridge.js'
+
             import {micromark} from "./micromark.bundle.mjs"
 
             var taskidtowaitfor = undefined
-            var intervalid = undefined
             var outputdiv = document.querySelector(".content .output")
-            var apiroot = "/api/tasks"
             var firstchathistory = []
             var secondchathistory = []
             var systemmessage = {
@@ -75,39 +75,30 @@
                 outputdiv.scrollTop = outputdiv.scrollHeight
             }
 
-            async function waiter() {
-                var statusresponse = await fetch(`${apiroot}/status/${taskidtowaitfor}`)
-                var statusresult = await statusresponse.json()
-                if (statusresult.status === "completed") {
-                    iswaiting = false
-                    var resultresponse = await fetch(`${apiroot}/result/${taskidtowaitfor}`)
-                    var json = await resultresponse.json()
-                    
-                    await fetch(`${apiroot}/remove/${taskidtowaitfor}`, { method: 'DELETE' })
-                    clearInterval(intervalid)
-                    intervalid = undefined
+            function statusCallback(taskStatus) {
+                iswaiting = true
+                waitingdiv.style.display = "block"
+                waitingdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${taskStatus.status}${taskStatus.progress ? " " + taskStatus.progress + "%" : ""}) ...`
+                outputdiv.scrollTop = outputdiv.scrollHeight
+            }
 
-                    var lastmessage = json.result.messages[json.result.messages.length - 1].content
+            async function completionCallback(taskResult) {
+                iswaiting = false
 
-                    if (currentsender === "second") {
-                        firstchathistory.push(lastmessage)
-                        currentsender = "first"
-                    } else {
-                        secondchathistory.push(lastmessage)
-                        currentsender = "second"
-                    }
+                var lastmessage = taskResult.messages[taskResult.messages.length - 1].content
 
-                    showmessagehistory()
-
-                    if (running) {
-                        await send()
-                    }
-
+                if (currentsender === "second") {
+                    firstchathistory.push(lastmessage)
+                    currentsender = "first"
                 } else {
-                    iswaiting = true
-                    waitingdiv.style.display = "block"
-                    waitingdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status}${statusresult.progress ? " " + statusresult.progress + "%" : ""}) ...`
-                    outputdiv.scrollTop = outputdiv.scrollHeight
+                    secondchathistory.push(lastmessage)
+                    currentsender = "second"
+                }
+
+                showmessagehistory()
+
+                if (running) {
+                    await send()
                 }
             }
 
@@ -115,26 +106,15 @@
 
                 var messages = createmessagestosend()
 
-                var body = {
-                    type: "analyzetext",
-                    data: {
-                        model: "llama3.2",
-                        messages: messages
-                    }
+                const data = {
+                    model: "llama3.2",
+                    messages: messages
                 }
-                var formData = new FormData()
-                formData.append('json', JSON.stringify(body))
-                var addresponse = await fetch(`${apiroot}/add/`, {
-                    method: "POST",
-                    body: formData
-                })
-                var addresult = await addresponse.json()
-                taskidtowaitfor = addresult.id
 
-                if (!intervalid) {
-                    intervalid = setInterval(waiter, 1000)
-                }
-                waiter()
+                var addResult = await TASKBRIDGE.addTask('analyzetext', data)
+                taskidtowaitfor = addResult.id
+
+                TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, completionCallback)
 
             }
 
@@ -179,13 +159,13 @@
             }
 
             function save() {
-                // var atag = document.createElement("a")
-                // atag.style.display = "none"
-                // atag.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(chathistory))}`)
-                // atag.setAttribute("download", `${Date.now()}.atc.json`) // atc = Analyze Text Chat
-                // document.body.appendChild(atag)
-                // atag.click()
-                // document.body.removeChild(atag)
+                var atag = document.createElement("a")
+                atag.style.display = "none"
+                atag.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(createmessagestosend(), null, 2))}`)
+                atag.setAttribute("download", `${Date.now()}.atc.json`) // atc = Analyze Text Chat
+                document.body.appendChild(atag)
+                atag.click()
+                document.body.removeChild(atag)
             }
 
             document.querySelector(".content .inputbar .start").addEventListener("click", start)

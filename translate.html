@@ -23,30 +23,22 @@
         </style>
         <script type="module">
 
-            var taskidtowaitfor = undefined
-            var intervalid = undefined
-            var targetdiv = document.querySelector(".content .output")
-            var apiroot = "/api/tasks"
+            import TASKBRIDGE from './taskbridge.js'
 
-            async function waiter() {
-                var statusresponse = await fetch(`${apiroot}/status/${taskidtowaitfor}`)
-                var statusresult = await statusresponse.json()
-                if (statusresult.status === "completed") {
-                    var resultresponse = await fetch(`${apiroot}/result/${taskidtowaitfor}`)
-                    var json = await resultresponse.json()
-                    var translatedtexts = json.result.texts
-                    targetdiv.innerHTML = translatedtexts.map(el => `<span title="${el.sourcelanguage || ""}">${el.text}</span>`).join("<br/>")
-                    await fetch(`${apiroot}/remove/${taskidtowaitfor}`, { method: 'DELETE' })
-                    localStorage.removeItem("translate-input")
-                    localStorage.removeItem("translate-sourcelanguage")
-                    localStorage.removeItem("translate-targetlanguage")
-                    localStorage.removeItem("translate-taskidtowaitfor")
-                    clearInterval(intervalid)
-                    intervalid = undefined
-                } else {
-                    targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${statusresult.status}${statusresult.progress ? " " + statusresult.progress + "%" : ""}) ...`
-                    console.log(statusresult)
-                }
+            var taskidtowaitfor = undefined
+            var targetdiv = document.querySelector(".content .output")
+
+            function statusCallback(taskStatus) {
+                targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${taskStatus.status}${taskStatus.progress ? " " + taskStatus.progress + "%" : ""}) ...`
+            }
+
+            function completionCallback(taskResult) {
+                var translatedtexts = taskResult.texts
+                targetdiv.innerHTML = translatedtexts.map(el => `<span title="${el.sourcelanguage || ""}">${el.text}</span>`).join("<br/>")
+                localStorage.removeItem("translate-input")
+                localStorage.removeItem("translate-sourcelanguage")
+                localStorage.removeItem("translate-targetlanguage")
+                localStorage.removeItem("translate-taskidtowaitfor")
             }
 
             async function translate() {
@@ -55,34 +47,20 @@
                 var sourcetexts = input.split("\n")
                 var sourcelanguage = document.querySelector(".content .sourcelanguage").value
                 var targetlanguage = document.querySelector(".content .targetlanguage").value
-                var body = {
-                    type: "translate",
-                    data: {
-                        targetlanguage: targetlanguage,
-                        texts: sourcetexts
-                    }
+                const data = {
+                    targetlanguage: targetlanguage,
+                    texts: sourcetexts
                 }
-                if (sourcelanguage && sourcelanguage.length > 0) body.data.sourcelanguage = sourcelanguage
-
-                var formData = new FormData()
-                formData.append('json', JSON.stringify(body))
-
-                var addresponse = await fetch(`${apiroot}/add/`, {
-                    method: "POST",
-                    body: formData
-                })
-                var addresult = await addresponse.json()
-                taskidtowaitfor = addresult.id
+                if (sourcelanguage && sourcelanguage.length > 0) data.sourcelanguage = sourcelanguage
+                var addResult = await TASKBRIDGE.addTask('translate', data)
+                taskidtowaitfor = addResult.id
 
                 localStorage.setItem("translate-input", input)
                 localStorage.setItem("translate-sourcelanguage", sourcelanguage)
                 localStorage.setItem("translate-targetlanguage", targetlanguage)
                 localStorage.setItem("translate-taskidtowaitfor", taskidtowaitfor)
 
-                if (!intervalid) {
-                    intervalid = setInterval(waiter, 1000)
-                }
-                waiter()
+                TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, completionCallback)
 
             }
 
@@ -94,9 +72,7 @@
             if (lasttargetlanguage) document.querySelector(".content .targetlanguage").value = lasttargetlanguage
             var lasttaskidtowaitfor = localStorage.getItem("translate-taskidtowaitfor")
             if (lasttaskidtowaitfor) {
-                taskidtowaitfor = lasttaskidtowaitfor
-                intervalid = setInterval(waiter, 1000)
-                waiter()
+                TASKBRIDGE.waitForTaskCompletion(lasttaskidtowaitfor, statusCallback, completionCallback)
             }
 
             document.querySelector(".content .transfer .start").addEventListener("click", translate)

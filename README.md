@@ -7,6 +7,20 @@ Web UI for https://github.com/hilderonny/taskbridge.
 You need to install [TaskBridge](https://github.com/hilderonny/taskbridge) and there point the `WEBROOT` environment variable to this repository.
 This is needed when using TaskBrige in a local network without domains for supressing CORS problems across different servers for API and Web UI.
 
+Create a file named `config.json` with the following template and adopt it to your needs.
+
+```json
+{
+    "apiRoot" : "/api",
+    "version" : "1.3.0"
+}
+```
+
+|Property|Description|
+|---|---|
+|`apiRoot`|Relative or absolute path to the **TaskBridge** API|
+|`version`|Version to show as "WebUI" at the bottom of the menu|
+
 ## Development
 
 - Update Glitch by calling

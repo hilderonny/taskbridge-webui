@@ -32,68 +32,45 @@
         </style>
         <script type="module">
 
+            import TASKBRIDGE from './taskbridge.js'
+
             var taskidtowaitfor = undefined
-            var intervalid = undefined
             var targetelement = document.querySelector(".result tbody")
-            var apiroot = "/api/tasks"
 
-            async function waiter() {
-                var statusresponse = await fetch(`${apiroot}/status/${taskidtowaitfor}`)
-                var statusresult = await statusresponse.json()
-                if (statusresult.status === "completed") {
-                    var resultresponse = await fetch(`${apiroot}/result/${taskidtowaitfor}`)
-                    var json = await resultresponse.json()
+            function statusCallback(taskStatus) {
+                targetelement.innerHTML = `<tr><td colspan="3">Waiting for result of task ${taskidtowaitfor} (${taskStatus.status}${taskStatus.progress ? " " + taskStatus.progress + "%" : ""}) ...</td></tr>`
+            }
 
-                    var predictions = json.result.predictions
-                    targetelement.innerHTML = predictions.map(prediction => `<tr><td>${prediction.class}</td><td>${prediction.name}</td><td>${Math.round(prediction.probability * 1000) / 10} %</td></tr>`).join("")
-
-                    await fetch(`${apiroot}/remove/${taskidtowaitfor}`, { method: 'DELETE' })
-                    localStorage.removeItem("classifyimage-taskidtowaitfor")
-                    clearInterval(intervalid)
-                    intervalid = undefined
-                } else {
-                    targetelement.innerHTML = `<tr><td colspan="3">Waiting for result of task ${taskidtowaitfor} (${statusresult.status}) ...</td></tr>`
-                }
+            function completionCallback(taskResult) {
+                var predictions = taskResult.predictions
+                targetelement.innerHTML = predictions.map(prediction => `<tr><td>${prediction.class}</td><td>${prediction.name}</td><td>${Math.round(prediction.probability * 1000) / 10} %</td></tr>`).join("")
+                localStorage.removeItem("classifyimage-taskidtowaitfor")
             }
 
             async function classifyimage() {
 
                 var file = document.querySelector(".file").files[0]
-                var json = {
-                    type: "classifyimage",
-                    data: {
-                        "targetlanguage": document.querySelector(".targetlanguage").value,
-                        "numberofpredictions": document.querySelector(".numberofpredictions").value
-                    }
+
+                targetelement.innerHTML = `<tr><td colspan="3">Uploading file ${file.name} ...</td></tr>`
+
+                const data = {
+                    "targetlanguage": document.querySelector(".targetlanguage").value,
+                    "numberofpredictions": document.querySelector(".numberofpredictions").value
                 }
 
-                var formData = new FormData()
-                formData.append('file', file)
-                formData.append('json', JSON.stringify(json))
+                var addResult = await TASKBRIDGE.addTask('classifyimage', data, file)
 
-                targetelement.innerText = `<tr><td colspan="3">Uploading file ${file.name} ...</td></tr>`
-                
-                var addresponse = await fetch(`${apiroot}/add/`, {
-                    method: "POST",
-                    body: formData
-                })
-                var addresult = await addresponse.json()
-                taskidtowaitfor = addresult.id
+                taskidtowaitfor = addResult.id
 
                 localStorage.setItem("classifyimage-taskidtowaitfor", taskidtowaitfor)
 
-                if (!intervalid) {
-                    intervalid = setInterval(waiter, 1000)
-                }
-                waiter()
+                TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, completionCallback)
 
             }
 
             var lasttaskidtowaitfor = localStorage.getItem("classifyimage-taskidtowaitfor")
             if (lasttaskidtowaitfor) {
-                taskidtowaitfor = lasttaskidtowaitfor
-                intervalid = setInterval(waiter, 1000)
-                waiter()
+                TASKBRIDGE.waitForTaskCompletion(lasttaskidtowaitfor, statusCallback, completionCallback)
             }
 
             document.querySelector(".file").addEventListener("change", (evt) => {
