@@ -23,7 +23,10 @@
             .content .inputbar button:hover { background-color: #d5d6d8; }
 
         </style>
+        <script type="text/javascript" src="mespeak.js"></script>
         <script type="module">
+
+            meSpeak.loadVoice("voices/de.json")
 
             import TASKBRIDGE from './taskbridge.js'
 
@@ -97,9 +100,12 @@
 
                 showmessagehistory()
 
-                if (running) {
-                    await send()
-                }
+                meSpeak.speak(lastmessage, 1, async() => {
+                    if (running) {
+                        await send()
+                    }
+                })
+
             }
 
             async function send() {
