@@ -16,8 +16,8 @@
             .leftcolumn input { border: 1px dashed #888888; margin: 0 auto; padding: 40px; border-radius: 5px; background: #fafafa; }
             .leftcolumn button { background: #f1f2f4; border: none; border-radius: 3px; padding: 8px; cursor: pointer; margin: 16px auto; }
             .leftcolumn button:hover { background-color: #d5d6d8; }
-            .leftcolumn audio { display: none; max-width: 100%; max-height: 100%; }
-            .leftcolumn video { display: none; max-width: 100%; max-height: 100%; }
+            .leftcolumn audio { display: none; width: 100%; }
+            .leftcolumn video { display: none; max-width: 100%; max-height: 600px; }
 
             .rightcolumn { flex: 1; display: flex; flex-direction: column; margin-left: 16px; overflow: auto; }
             .rightcolumn .result { flex: 1; border: 1px solid #dddddd; padding: 4px; overflow: auto; }
@@ -27,10 +27,11 @@
             .rightcolumn .time { white-space: nowrap; color: #999; padding-right: 16px; position: relative; }
             .rightcolumn .time .start { flex: 1; margin-bottom: 16px; }
             .rightcolumn .time .end { position: absolute; bottom: 0; }
-            .rightcolumn td { vertical-align: top; border-bottom: 1px solid #ccc; }
+            .rightcolumn td, .rightcolumn th { vertical-align: top; border-bottom: 1px solid #ccc; }
 
 
         </style>
+        <script src="xlsx.full.min.js"></script>
         <script type="module">
 
             import TASKBRIDGE from './taskbridge.js'
@@ -46,27 +47,49 @@
                 resultTable.innerText = `Waiting for result of task ${taskidtowaitfor} (${taskStatus.status}${taskStatus.progress ? " " + taskStatus.progress + "%" : ""}) ...`
             }
 
-            function completionCallback(taskResult) {
+            function transcribeAndTranslateCompletionCallback(taskResult) {
                 if (taskResult) {
-                    showResult(taskResult.texts)
+                    translate(taskResult.language, taskResult.texts)
                 }
-                localStorage.removeItem("transcribe-taskidtowaitfor")
             }
 
             async function transcribe() {
-
                 var file = fileInput.files[0]
-
                 resultTable.innerText = `Uploading file ${file.name} ...`
-
                 var addResult = await TASKBRIDGE.addTask('transcribe', undefined, file)
-
                 taskidtowaitfor = addResult.id
+                TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, (taskResult) => {
+                    if (taskResult) {
+                        showResult(taskResult.texts, false)
+                    }
+                })
+            }
 
-                localStorage.setItem("transcribe-taskidtowaitfor", taskidtowaitfor)
-
-                TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, completionCallback)
-
+            async function transcribeAndTranslate() {
+                var file = fileInput.files[0]
+                resultTable.innerText = `Uploading file ${file.name} ...`
+                const transcribeAddResult = await TASKBRIDGE.addTask('transcribe', undefined, file)
+                taskidtowaitfor = transcribeAddResult.id
+                TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, async (transcribeTaskResult) => {
+                    if (transcribeTaskResult) {
+                        const data = {
+                            sourcelanguage: transcribeTaskResult.language,
+                            targetlanguage: "de",
+                            texts: transcribeTaskResult.texts.map(t => t.text)
+                        }
+                        const translateAddResult = await TASKBRIDGE.addTask('translate', data)
+                        taskidtowaitfor = translateAddResult.id
+                        TASKBRIDGE.waitForTaskCompletion(taskidtowaitfor, statusCallback, (translateTaskResult) => {
+                            if (translateTaskResult) {
+                                const texts = transcribeTaskResult.texts
+                                for (let i = 0; i < texts.length; i++) {
+                                    texts[i].translated = translateTaskResult.texts[i].text
+                                }
+                                showResult(texts, true)
+                            }
+                        })
+                    }
+                })
             }
 
             function handleTimeUpdate(event) {
@@ -87,8 +110,8 @@
                 return `${hours}:${minutes}:${secs}.${millis}`;
             }
 
-            function showResult(texts) {
-                resultTable.innerHTML = ""
+            function showResult(texts, hastranslation) {
+                resultTable.innerHTML = `<tr><th>Time</th><th>Transcription</th>${hastranslation ? "<th>Translation</th>" : ""}</tr>`
                 for (const text of texts) {
                     const row = document.createElement("tr")
                     row.startTime = text.start
@@ -106,16 +129,19 @@
                     textCell.classList.add("text")
                     textCell.innerHTML = text.text
                     row.appendChild(textCell)
+                    if (text.translated) {
+                        const translatedCell = document.createElement("td")
+                        translatedCell.setAttribute("contenteditable", true)
+                        translatedCell.classList.add("text")
+                        translatedCell.innerHTML = text.translated
+                        row.appendChild(translatedCell)
+                    }
                     resultTable.appendChild(row)
                 }
             }
 
-            var lasttaskidtowaitfor = localStorage.getItem("transcribe-taskidtowaitfor")
-            if (lasttaskidtowaitfor) {
-                TASKBRIDGE.waitForTaskCompletion(lasttaskidtowaitfor, statusCallback, completionCallback)
-            }
-
-            document.querySelector(".start").addEventListener("click", transcribe)
+            document.querySelector(".transcribe").addEventListener("click", transcribe)
+            document.querySelector(".transcribeandtranslate").addEventListener("click", transcribeAndTranslate)
 
             fileInput.addEventListener("change", () => {
                 const file = fileInput.files[0]
@@ -141,14 +167,9 @@
             audioControl.addEventListener("timeupdate", handleTimeUpdate)
             videoControl.addEventListener("timeupdate", handleTimeUpdate)
 
-            document.querySelector(".downloadtext").addEventListener("click", () => {
-                const fulltext = Array.from(resultTable.querySelectorAll("td.text")).map(tr => tr.innerText).join("\n")
-                const link = document.createElement("a");
-                const file = new Blob([fulltext], { type: 'text/plain' });
-                link.href = URL.createObjectURL(file);
-                link.download = "transcription.txt";
-                link.click();
-                URL.revokeObjectURL(link.href);
+            document.querySelector(".download").addEventListener("click", () => {
+                const wb = XLSX.utils.table_to_book(resultTable);
+                XLSX.writeFile(wb, "transcription.xlsx");
             })
 
         </script>
@@ -164,7 +185,8 @@
 
                 <input type="file" class="file" accept="audio/*,video/*" />
 
-                <button class="start">Transcribe</button>
+                <button class="transcribe">Transcribe</button>
+                <button class="transcribeandtranslate">Transcribe and translate</button>
 
                 <video controls></video>
 
@@ -178,7 +200,7 @@
                     <table></table>
                 </div>
 
-                <button class="downloadtext">Download text</button>
+                <button class="download">Download</button>
             </div>
 
         </div>
