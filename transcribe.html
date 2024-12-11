@@ -10,6 +10,10 @@
             h1 { font-size: 24pt; margin-bottom: 24px; }
             h2 { font-size: 18pt; font-weight: normal; margin-bottom: 12px; }
 
+            .content { display: flex; flex-direction: row; flex: 1; }
+
+            .leftcolumn { flex: 1; display: flex; flex-direction: column; margin-right: 16px; }
+            .rightcolumn { flex: 1; display: flex; flex-direction: column; margin-left: 16px; }
 
             input { border: 1px dashed #888888; margin: 0 auto; padding: 40px; border-radius: 5px; background: #fafafa; }
             button { background: #f1f2f4; border: none; border-radius: 3px; padding: 8px; cursor: pointer; margin: 16px auto; }
@@ -25,20 +29,23 @@
 
             var taskidtowaitfor = undefined
             var targetdiv = document.querySelector(".result")
+            const fileInput = document.querySelector(".file")
 
             function statusCallback(taskStatus) {
                 targetdiv.innerText = `Waiting for result of task ${taskidtowaitfor} (${taskStatus.status}${taskStatus.progress ? " " + taskStatus.progress + "%" : ""}) ...`
             }
 
             function completionCallback(taskResult) {
-                var texts = taskResult.texts
-                targetdiv.innerHTML = texts.map(text => text.text).join("<br/>")
+                if (taskResult) {
+                    var texts = taskResult.texts
+                    targetdiv.innerHTML = texts.map(text => text.text).join("<br/>")
+                }
                 localStorage.removeItem("transcribe-taskidtowaitfor")
             }
 
             async function transcribe() {
 
-                var file = document.querySelector(".file").files[0]
+                var file = fileInput.files[0]
 
                 targetdiv.innerText = `Uploading file ${file.name} ...`
 
@@ -59,19 +66,37 @@
 
             document.querySelector(".start").addEventListener("click", transcribe)
 
+            fileInput.addEventListener("change", () => {
+                console.log(fileInput.files)
+            })
+
         </script>
     </head>
     <body>
 
         <h1>Transcribe</h1>
 
-        <input type="file" class="file"/>
+        <div class="content">
 
-        <button class="start">Transcribe</button>
+            <div class="leftcolumn">
+                <h2>Source</h2>
 
-        <h2>Result</h2>
+                <input type="file" class="file"/>
 
-        <div class="result" contenteditable></div>
+                <button class="start">Transcribe</button>
+
+                <video controls></video>
+
+                <audio controls></audio>
+            </div>
+
+            <div class="rightcolumn">
+                <h2>Result</h2>
+
+                <div class="result" contenteditable></div>
+            </div>
+
+        </div>
 
     </body>
 </html>

@@ -60,9 +60,11 @@
 
             function completionCallback(taskResult) {
                 iswaiting = false
-                chathistory = taskResult.messages
-                localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
-                showmessagehistory()
+                if (taskResult) {
+                    chathistory = taskResult.messages
+                    localStorage.setItem("analyzetext-chathistory", JSON.stringify(chathistory))
+                    showmessagehistory()
+                }
                 localStorage.removeItem("analyzetext-taskidtowaitfor")
             }
 

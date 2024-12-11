@@ -63,7 +63,7 @@ async function getTaskStatistics() {
 // https://github.com/hilderonny/taskbridge/blob/main/doc/API.md#get-status-information-about-a-task
 async function getTaskStatus(taskId) {
     const response = await fetch(`${CONFIG.apiRoot}/tasks/status/${taskId}`)
-    const status = await response.json()
+    const status = response.status !== 404 ? await response.json() : undefined
     return status
 }
 
@@ -107,7 +107,11 @@ async function waitForTaskCompletion(taskId, statusCallback, completionCallback)
 
     const waiter = async function() {
         const taskStatus = await getTaskStatus(taskId)
-        if (taskStatus.status === "completed") {
+        if (taskStatus === undefined) {
+            // Has been deleted
+            clearInterval(intervalId)
+            await completionCallback()
+        } else if (taskStatus.status === "completed") {
             if (completionCallback) {
                 const taskResult = await getTaskResult(taskId)
                 await completionCallback(taskResult)

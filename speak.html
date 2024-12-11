@@ -33,15 +33,17 @@
             }
 
             async function completionCallback(taskResult) {
-                const audio = taskResult.audio
-                targetdiv.innerText = "Playing audio ..."
-                if (audio.length > 0) {
-                    const dataUri = "data:audio/mp3;base64," + audio
-                    const player = new Audio(dataUri)
-                    player.addEventListener("ended", () => {
-                        targetdiv.innerText = ""
-                    })
-                    await player.play()
+                if (taskResult) {
+                    const audio = taskResult.audio
+                    targetdiv.innerText = "Playing audio ..."
+                    if (audio.length > 0) {
+                        const dataUri = "data:audio/mp3;base64," + audio
+                        const player = new Audio(dataUri)
+                        player.addEventListener("ended", () => {
+                            targetdiv.innerText = ""
+                        })
+                        await player.play()
+                    }
                 }
                 localStorage.removeItem("speak-input")
                 localStorage.removeItem("speak-language")

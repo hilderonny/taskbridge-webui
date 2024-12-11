@@ -33,8 +33,10 @@
             }
 
             function completionCallback(taskResult) {
-                var translatedtexts = taskResult.texts
-                targetdiv.innerHTML = translatedtexts.map(el => `<span title="${el.sourcelanguage || ""}">${el.text}</span>`).join("<br/>")
+                if (taskResult) {
+                    var translatedtexts = taskResult.texts
+                    targetdiv.innerHTML = translatedtexts.map(el => `<span title="${el.sourcelanguage || ""}">${el.text}</span>`).join("<br/>")
+                }
                 localStorage.removeItem("translate-input")
                 localStorage.removeItem("translate-sourcelanguage")
                 localStorage.removeItem("translate-targetlanguage")

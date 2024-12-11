@@ -31,8 +31,10 @@
             }
 
             function completionCallback(taskResult) {
-                var detection = taskResult.detection
-                targetdiv.innerHTML = detection || "No virus found."
+                if (taskResult) {
+                    var detection = taskResult.detection
+                    targetdiv.innerHTML = detection || "No virus found."
+                }
                 localStorage.removeItem("scanforvirus-taskidtowaitfor")
             }
 

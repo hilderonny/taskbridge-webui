@@ -42,8 +42,10 @@
             }
 
             function completionCallback(taskResult) {
-                var predictions = taskResult.predictions
-                targetelement.innerHTML = predictions.map(prediction => `<tr><td>${prediction.class}</td><td>${prediction.name}</td><td>${Math.round(prediction.probability * 1000) / 10} %</td></tr>`).join("")
+                if (taskResult) {
+                    var predictions = taskResult.predictions
+                    targetelement.innerHTML = predictions.map(prediction => `<tr><td>${prediction.class}</td><td>${prediction.name}</td><td>${Math.round(prediction.probability * 1000) / 10} %</td></tr>`).join("")
+                }
                 localStorage.removeItem("classifyimage-taskidtowaitfor")
             }
 

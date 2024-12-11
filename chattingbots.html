@@ -88,23 +88,25 @@
             async function completionCallback(taskResult) {
                 iswaiting = false
 
-                var lastmessage = taskResult.messages[taskResult.messages.length - 1].content
+                if (taskResult) {
+                    var lastmessage = taskResult.messages[taskResult.messages.length - 1].content
 
-                if (currentsender === "second") {
-                    firstchathistory.push(lastmessage)
-                    currentsender = "first"
-                } else {
-                    secondchathistory.push(lastmessage)
-                    currentsender = "second"
-                }
-
-                showmessagehistory()
-
-                meSpeak.speak(lastmessage, 1, async() => {
-                    if (running) {
-                        await send()
+                    if (currentsender === "second") {
+                        firstchathistory.push(lastmessage)
+                        currentsender = "first"
+                    } else {
+                        secondchathistory.push(lastmessage)
+                        currentsender = "second"
                     }
-                })
+
+                    showmessagehistory()
+
+                    meSpeak.speak(lastmessage, 1, async() => {
+                        if (running) {
+                            await send()
+                        }
+                    })
+                }
 
             }
 
