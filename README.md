@@ -42,3 +42,4 @@ Create a file named `config.json` with the following template and adopt it to yo
 1. [Virus icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/virus)
 1. [Ai assistant icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/ai-assistant)
 1. [Speak icons created by yut1655 - Flaticon](https://www.flaticon.com/free-icons/speak)
+1. [Interview icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/interview)
