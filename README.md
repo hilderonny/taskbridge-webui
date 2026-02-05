@@ -1,5 +1,7 @@
 # taskbridge-webui
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hilderonny/taskbridge-webui)
+
 Web UI for https://github.com/hilderonny/taskbridge.
 
 ## Installation
